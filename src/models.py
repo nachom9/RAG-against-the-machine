@@ -7,6 +7,7 @@ class MinimalSource(BaseModel):
     file_path: str
     first_character_index: int
     last_character_index: int
+    text: str | None = None
 
 class UnansweredQuestion(BaseModel):
     question_id: str = Field(default_factory=lambda: str(uuid.uuid4()))

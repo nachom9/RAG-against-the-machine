@@ -1,8 +1,9 @@
 import ingest
 
 def main():
-    print("Hello from rag-against-the-machine!")
-    print("Program ended")
+    print("\n========= Hello from rag-against-the-machine! =========\n")
+    ingest.get_chunks('data')
+    print("\n========= Program ended =========\n")
 
 
 if __name__ == "__main__":
