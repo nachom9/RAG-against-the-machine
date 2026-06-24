@@ -2,7 +2,7 @@ import ingest
 
 def main():
     print("\n========= Hello from rag-against-the-machine! =========\n")
-    ingest.get_chunks('data')
+    ingest.get_chunks('test')
     print("\n========= Program ended =========\n")
 
 
