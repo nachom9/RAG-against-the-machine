@@ -6,11 +6,12 @@ def get_chunks(path: str):
 
     for file in files:
         end_check = False
+        last_char = 0
         if file.endswith(".py"):
             with open(file, 'r') as f:
                 content = f.read()
                 first_char = 0
-                while not end_check:
+                while not end_check and last_char < len(content):
                     chunk_limit = first_char + 1999
                     chunk = content[first_char:chunk_limit]
                     last_char = (
@@ -18,12 +19,27 @@ def get_chunks(path: str):
                             chunk[first_char:chunk_limit].rfind("def"))
                     )
                     if last_char < 0:
-                        last_char = len(content)
+                        last_char = chunk_limit
+                    if last_char == len(content):
                         end_check = True
                     save_chunk(content, path, first_char, last_char)
                     first_char = last_char + 1
         elif file.endswith(".md"):
-            print("md")
+            with open(file, 'r') as f:
+                content = f.read()
+                first_char = 0
+                while not end_check and last_char < len(content):
+                    chunk_limit = first_char + 1999
+                    chunk = content[first_char:chunk_limit]
+                    last_char = chunk[first_char:chunk_limit].rfind("\n#")
+                    if last_char == -1:
+                        last_char = chunk[first_char:chunk_limit].rfind("\n##")
+                    if last_char < 0:
+                        last_char = chunk_limit
+                    if last_char == len(content):
+                        end_check = True
+                    save_chunk(content, path, first_char, last_char)
+                    first_char = last_char + 1
 
 
 def save_chunk(content: str, path: str, first_char: int, last_char: int):
