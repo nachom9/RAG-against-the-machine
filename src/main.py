@@ -1,4 +1,4 @@
-import ingest
+from src import ingest
 
 def main():
     print("\n========= Hello from rag-against-the-machine! =========\n")

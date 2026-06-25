@@ -1,9 +1,10 @@
 from pathlib import Path
-
+from .models import MinimalSource
+import json
 
 def get_chunks(path: str):
     files = [str(f) for f in Path(path).rglob("*") if f.is_file()]
-
+    create_dir("data/processed/chunks")
     for file in files:
         end_check = False
         last_char = 0
@@ -22,7 +23,8 @@ def get_chunks(path: str):
                         last_char = chunk_limit
                     if last_char == len(content):
                         end_check = True
-                    save_chunk(content, path, first_char, last_char)
+                    chunk = content[first_char:last_char]
+                    save_chunk(chunk, path, first_char, last_char)
                     first_char = last_char + 1
         elif file.endswith(".md"):
             with open(file, 'r') as f:
@@ -38,14 +40,19 @@ def get_chunks(path: str):
                         last_char = chunk_limit
                     if last_char == len(content):
                         end_check = True
-                    save_chunk(content, path, first_char, last_char)
+                    chunk = content[first_char:last_char]
+                    save_chunk(chunk, path, first_char, last_char)
                     first_char = last_char + 1
 
 
 def save_chunk(content: str, path: str, first_char: int, last_char: int):
-    print(content[first_char:last_char])
-    print()
-    return path[first_char:last_char]
+
+    chunk = MinimalSource(
+        file_path = path,
+        first_character_index = first_char,
+        last_character_index = last_char,
+        text = content
+    )
 
 
 def create_dir(path: str):
