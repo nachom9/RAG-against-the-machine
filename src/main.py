@@ -2,7 +2,8 @@ from src import ingest
 
 def main():
     print("\n========= Hello from rag-against-the-machine! =========\n")
-    ingest.get_chunks('test')
+    parser = ingest.Parser()
+    parser.get_chunks('test')
     print("\n========= Program ended =========\n")
 
 
