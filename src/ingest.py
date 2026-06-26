@@ -44,6 +44,17 @@ def get_chunks(path: str):
                     chunk = content[first_char:last_char]
                     save_chunk(chunk, file, first_char, last_char)
                     first_char = last_char
+        else:
+            with open(file, 'r') as f:
+                content = f.read()
+                while not end_check and last_char < len(content):
+                    chunk_limit = min(first_char + 1999, len(content))
+                    last_char = chunk_limit
+                    if last_char == len(content):
+                        end_check = True
+                    chunk = content[first_char:last_char]
+                    save_chunk(chunk, file, first_char, last_char)
+                    first_char = last_char
 
 
 def save_chunk(content: str, path: str, first_char: int, last_char: int):
