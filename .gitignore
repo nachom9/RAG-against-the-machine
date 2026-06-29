@@ -9,3 +9,4 @@ __pycache__/
 .pytest_cache/
 .flake8
 vllm-0.10.1/
+data/

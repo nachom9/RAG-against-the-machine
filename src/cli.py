@@ -9,7 +9,21 @@ class RAGAplication:
         parser.get_chunks('vllm-0.10.1')
         print("Ingestion complete! Indices saved under data/processed/")
 
-    def
+    def search(self):
+        pass
+
+    def search_dataset(self):
+        pass
+
+    def answer(self):
+        pass
+
+    def answer_dataset(self):
+        pass
+
+    def evaluate(self):
+        pass
+
 
 def main() -> None:
     print("\n========= Hello from rag-against-the-machine! =========\n")

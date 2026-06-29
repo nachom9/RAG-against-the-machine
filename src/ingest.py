@@ -1,10 +1,12 @@
 from pathlib import Path
+import bm25s
 from .models import MinimalSource
 import json
 
 class Parser:
 
     def __init__(self, max_chunk_size: int):
+        self.text_chunks: list = []
         self.max_chunk_size = max_chunk_size
         self.sources: list = []
         self.path: str = "data/processed/chunks"
@@ -74,6 +76,7 @@ class Parser:
             last_character_index = last_char,
             text = content
         )
+        self.text_chunks.append(content)
         self.sources.append(chunk)
 
     def create_dir(self):
@@ -94,3 +97,12 @@ class Parser:
         path = f"{self.path}/all_chunks.json"
         with open(path, 'w', encoding = "utf-8") as f:
             json.dump(dict_sources, f, indent=4, ensure_ascii = False)
+        chunk_tokens = bm25s.tokenize(self.text_chunks, stopwords="english")
+        retriever = bm25s.BM25(corpus=self.text_chunks)
+        retriever.index(chunk_tokens)
+        index_path = "data/processed/bm25_index"
+        try:
+            retriever.save(index_path, corpus=self.text_chunks)
+        except Exception as e:
+            print(f"Error. {e}")
+            exit(1)
