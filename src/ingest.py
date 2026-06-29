@@ -4,7 +4,8 @@ import json
 
 class Parser:
 
-    def __init__(self):
+    def __init__(self, max_chunk_size: int):
+        self.max_chunk_size = max_chunk_size
         self.sources: list = []
         self.path: str = "data/processed/chunks"
 
@@ -18,7 +19,7 @@ class Parser:
                 with open(file, 'r') as f:
                     content = f.read()
                     while not end_check and last_char < len(content):
-                        chunk_limit = min(first_char + 1999, len(content))
+                        chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
                         last_char = (
                             max(content[first_char:chunk_limit].rfind("class"),
                                 content[first_char:chunk_limit].rfind("def"))
@@ -36,7 +37,7 @@ class Parser:
                 with open(file, 'r') as f:
                     content = f.read()
                     while not end_check and last_char < len(content):
-                        chunk_limit = min(first_char + 1999, len(content))
+                        chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
                         last_char = content[first_char:chunk_limit].rfind("\n# ")
                         if last_char <= 0:
                             last_char = content[first_char:chunk_limit].rfind("\n## ")
@@ -54,10 +55,9 @@ class Parser:
                     try:
                         content = f.read()
                     except Exception as e:
-                        print(file, e)
                         continue
                     while not end_check and last_char < len(content):
-                        chunk_limit = min(first_char + 1999, len(content))
+                        chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
                         last_char = chunk_limit
                         if last_char == len(content):
                             end_check = True
