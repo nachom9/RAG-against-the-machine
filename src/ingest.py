@@ -51,7 +51,11 @@ class Parser:
                         first_char = last_char
             else:
                 with open(file, 'r') as f:
-                    content = f.read()
+                    try:
+                        content = f.read()
+                    except Exception as e:
+                        print(file, e)
+                        continue
                     while not end_check and last_char < len(content):
                         chunk_limit = min(first_char + 1999, len(content))
                         last_char = chunk_limit
