@@ -3,8 +3,6 @@
 .venv/
 .uv/
 
-*.pdf
-
 __pycache__/
 *.pyc
 .mypy_cache/
