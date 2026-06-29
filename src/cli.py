@@ -9,8 +9,15 @@ class RAGAplication:
         parser.get_chunks('vllm-0.10.1')
         print("Ingestion complete! Indices saved under data/processed/")
 
-    def search(self):
-        pass
+    def search(self, query: str, k: int = 10)-> str:
+        index_path = "data/processed/bm25_index"
+        chunks_path = "data/chunks/all_chunks"
+
+        retriever = bm25s.BM25.load(index_path, load_corpus=True)
+
+        with open(chunks_path, 'r', encoding=utf-8) as f:
+            chunks = json.load(f)
+
 
     def search_dataset(self):
         pass
