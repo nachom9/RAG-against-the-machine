@@ -10,4 +10,4 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 .flake8
-.vllm_0.10.1
+vllm_0.10.1
