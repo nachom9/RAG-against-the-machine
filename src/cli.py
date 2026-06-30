@@ -82,10 +82,8 @@ class RAGAplication:
             k=k
         )
         dict_searchs = searchs.model_dump()
-        json_searchs = json.dumps(dict_searchs, indent=4, ensure_ascii=False)
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(json_searchs, f, indent=4, ensure_ascii=False)
-        print(json_searchs)
+            json.dump(dict_searchs, f, indent=4, ensure_ascii=False)
 
     def answer(self):
         pass
