@@ -13,7 +13,10 @@ class Parser:
 
     def get_chunks(self, path: str):
         files = [str(f) for f in Path(path).rglob("*") if f.is_file()]
+        ignore = ["Zone.Identifier", ".git", "/."]
         for file in files:
+            if any(word in file for word in ignore):
+                continue
             end_check = False
             last_char = 0
             first_char = 0
@@ -98,11 +101,12 @@ class Parser:
         with open(path, 'w', encoding = "utf-8") as f:
             json.dump(dict_sources, f, indent=4, ensure_ascii = False)
         chunk_tokens = bm25s.tokenize(self.text_chunks, stopwords="english")
-        retriever = bm25s.BM25(corpus=self.text_chunks)
+        chunks_range = [str(i) for i in range(len(self.text_chunks))]
+        retriever = bm25s.BM25(corpus=chunks_range)
         retriever.index(chunk_tokens)
         index_path = "data/processed/bm25_index"
         try:
-            retriever.save(index_path, corpus=self.text_chunks)
+            retriever.save(index_path, corpus=chunks_range)
         except Exception as e:
             print(f"Error. {e}")
             exit(1)
