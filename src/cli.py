@@ -2,7 +2,8 @@ from src.ingest import Parser
 import fire
 import bm25s
 import json
-from .models import MinimalSearchResults, MinimalSource, UnansweredQuestion, StudentSearchResults
+from .models import MinimalSearchResults, MinimalSource, StudentSearchResults
+from src.utils import get_search_results
 
 class RAGAplication:
 
@@ -85,8 +86,27 @@ class RAGAplication:
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(dict_searchs, f, indent=4, ensure_ascii=False)
 
-    def answer(self):
-        pass
+    def answer(self, query: str, k: int = 10):
+        search = get_search_results(query, k)
+        prompt = f"""You are a precise technical assistant for the vLLM inference engine.
+        Your task is to answer the user's question using ONLY the provided codebase context.
+
+        [CONSTRAINTS]
+        1. Answer the question using ONLY the information provided in the [CONTEXT] section.
+        2. If the context does not contain the answer, reply exactly with: "I do not have enough information in the context to answer."
+        3. Do not make up or hallucinate any functions, code blocks, parameters, or explanations.
+        4. Keep your answer technical, concise, and straight to the point.
+
+        [CONTEXT]
+        {search}
+
+        [USER QUESTION]
+        {query}
+
+        [ANSWER]"""
+        print(prompt)
+
+
 
     def answer_dataset(self):
         pass
