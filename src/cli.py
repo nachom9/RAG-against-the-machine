@@ -90,6 +90,7 @@ class RAGAplication:
     def answer(self, query: str, k: int = 10):
         search = get_search_results(query, k)
         context = f"Question: {search['question']}\n\n"
+        question = search['question']
 
         for i, source in enumerate(search["retrieved_sources"], 1):
             context += (
@@ -97,23 +98,43 @@ class RAGAplication:
                 f"File: {source['file_path']}\n"
                 f"{source['text']}\n\n"
             )
+            prompt = f"""<|im_start|>system
+You are a technical assistant answering questions about the vLLM repository.
 
-        prompt = f"""You are a precise technical assistant for the vLLM inference engine.
-        Your task is to answer the user's question using ONLY the provided codebase context.
+Use only the provided context.
+Do not use external knowledge.
+Ignore sources that are not directly relevant to the question.
+Do not infer that something is required unless the provided context explicitly says it.
 
-        [CONSTRAINTS]
-        1. Answer the question using ONLY the information provided in the [CONTEXT] section.
-        2. If the context does not contain the answer, reply exactly with: "I do not have enough information in the context to answer."
-        3. Do not make up or hallucinate any functions, code blocks, parameters, or explanations.
-        4. Keep your answer technical, concise, and straight to the point.
+Give exactly one answer.
+Use at most 2 sentences.
+Do not repeat the answer.
+Do not provide alternative phrasings.
+Do not include a separate source list.
+Do not explain what each source contains.
 
-        [CONTEXT]
-        {context}
+Your output must be exactly one short answer.
+The answer must end with one or more citations in this exact format: [Source N].
+Do not write an answer without a citation.
+Do not include a separate source list.
+If the context does not contain the answer, write exactly: The provided context is insufficient.
+<|im_end|>
+<|im_start|>user
 
-        [USER QUESTION]
-        {query}
+Context:
+{context}
 
-        [ANSWER]"""
+Question:
+{question}
+
+Required answer format:
+<answer text>. [Source N]
+
+/no_think
+<|im_end|>
+<|im_start|>assistant
+"""
+
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForCausalLM.from_pretrained(model_name)
@@ -121,14 +142,18 @@ class RAGAplication:
         generated_ids = model.generate(
             **inputs,
             do_sample=False,
-            max_new_tokens=512,
+            max_new_tokens=20,
+            repetition_penalty=1.2,
             pad_token_id=tokenizer.eos_token_id,
             eos_token_id=tokenizer.eos_token_id
             )
         prompt_length = inputs["input_ids"].shape[1]
         output_ids = generated_ids[0][prompt_length:]
         answer_text = tokenizer.decode(output_ids, skip_special_tokens=True)
-
+        answer_text = answer_text.replace("<think>\n</think>", "")
+        answer_text = answer_text.replace("<think>", "")
+        answer_text = answer_text.replace("</think>", "")
+        answer_text = answer_text.strip()
         print(answer_text)
 
 
