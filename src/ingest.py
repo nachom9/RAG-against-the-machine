@@ -2,6 +2,7 @@ from pathlib import Path
 import bm25s
 from .models import MinimalSource
 import json
+from src.utils import create_dir
 
 class Parser:
 
@@ -82,19 +83,8 @@ class Parser:
         self.text_chunks.append(content)
         self.sources.append(chunk)
 
-    def create_dir(self):
-        path = self.path
-        try:
-            Path(path).mkdir(parents=True, exist_ok=True)
-        except PermissionError:
-            print(f"Error. Permission denied while creating the directory '{path}'")
-            exit(1)
-        except OSError as e:
-            print(f"Error. Failed to create the directory '{path}': {e}")
-            exit(1)
-
     def generate_json(self):
-        self.create_dir()
+        create_dir(self.path)
 
         dict_sources = [chunk.model_dump() for chunk in self.sources]
         path = f"{self.path}/all_chunks.json"

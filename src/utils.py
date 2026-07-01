@@ -1,6 +1,7 @@
 import bm25s
 from src.models import MinimalSearchResults, MinimalSource
 import json
+from pathlib import Path
 
 def get_search_results(query: str, k: int = 10)-> str:
     index_path = "data/processed/bm25_index"
@@ -33,3 +34,13 @@ def get_search_results(query: str, k: int = 10)-> str:
     dict_result = search_result.model_dump()
     json_result = json.dumps(dict_result, indent=4, ensure_ascii=False)
     return json_result
+
+def create_dir(path: str):
+    try:
+        Path(path).mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        print(f"Error. Permission denied while creating the directory '{path}'")
+        exit(1)
+    except OSError as e:
+        print(f"Error. Failed to create the directory '{path}': {e}")
+        exit(1)

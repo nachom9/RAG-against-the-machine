@@ -47,14 +47,14 @@ class RAGAplication:
 
 
     def search_dataset(self, dataset_path: str, output_path: str, k: int = 10):
-        
+
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
         search_results_list = []
         retriever = bm25s.BM25.load(index_path, load_corpus=True)
         with open(chunks_path, 'r', encoding="utf-8") as f:
             chunks = json.load(f)
-    
+
         with open(dataset_path, 'r', encoding='utf-8') as f:
             dataset = json.load(f)
         for question in dataset['rag_questions']:
@@ -77,7 +77,7 @@ class RAGAplication:
                 retrieved_sources=sources,
                 )
             search_results_list.append(search_result)
-        
+
         searchs = StudentSearchResults(
             search_results=search_results_list,
             k=k
