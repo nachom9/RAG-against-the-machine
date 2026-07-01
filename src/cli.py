@@ -4,6 +4,7 @@ import bm25s
 import json
 from .models import MinimalSearchResults, MinimalSource, StudentSearchResults
 from src.utils import get_search_results
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class RAGAplication:
 
@@ -88,6 +89,15 @@ class RAGAplication:
 
     def answer(self, query: str, k: int = 10):
         search = get_search_results(query, k)
+        context = f"Question: {search['question']}\n\n"
+
+        for i, source in enumerate(search["retrieved_sources"], 1):
+            context += (
+                f"### Source {i}\n"
+                f"File: {source['file_path']}\n"
+                f"{source['text']}\n\n"
+            )
+
         prompt = f"""You are a precise technical assistant for the vLLM inference engine.
         Your task is to answer the user's question using ONLY the provided codebase context.
 
@@ -98,13 +108,30 @@ class RAGAplication:
         4. Keep your answer technical, concise, and straight to the point.
 
         [CONTEXT]
-        {search}
+        {context}
 
         [USER QUESTION]
         {query}
 
         [ANSWER]"""
-        print(prompt)
+        model_name = "Qwen/Qwen3-0.6B"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+        inputs = tokenizer(prompt, return_tensors='pt').to(model.device)
+        generated_ids = model.generate(
+            **inputs,
+            do_sample=False,
+            max_new_tokens=512,
+            pad_token_id=tokenizer.eos_token_id,
+            eos_token_id=tokenizer.eos_token_id
+            )
+        prompt_length = inputs["input_ids"].shape[1]
+        output_ids = generated_ids[0][prompt_length:]
+        answer_text = tokenizer.decode(output_ids, skip_special_tokens=True)
+
+        print(answer_text)
+
+
 
 
 

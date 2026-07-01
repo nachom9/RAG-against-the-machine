@@ -32,8 +32,7 @@ def get_search_results(query: str, k: int = 10)-> str:
     )
 
     dict_result = search_result.model_dump()
-    json_result = json.dumps(dict_result, indent=4, ensure_ascii=False)
-    return json_result
+    return dict_result
 
 def create_dir(path: str):
     try:
