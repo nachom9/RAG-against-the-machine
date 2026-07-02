@@ -4,6 +4,7 @@ from .models import MinimalSource
 import json
 from src.utils import create_dir
 
+
 class Parser:
 
     def __init__(self, max_chunk_size: int):
@@ -60,7 +61,7 @@ class Parser:
                 with open(file, 'r') as f:
                     try:
                         content = f.read()
-                    except Exception as e:
+                    except Exception:
                         continue
                     while not end_check and last_char < len(content):
                         chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
@@ -75,10 +76,10 @@ class Parser:
     def save_chunk(self, content: str, path: str, first_char: int, last_char: int):
 
         chunk = MinimalSource(
-            file_path = path,
-            first_character_index = first_char,
-            last_character_index = last_char,
-            text = content
+            file_path=path,
+            first_character_index=first_char,
+            last_character_index=last_char,
+            text=content
         )
         self.text_chunks.append(content)
         self.sources.append(chunk)
@@ -88,8 +89,8 @@ class Parser:
 
         dict_sources = [chunk.model_dump() for chunk in self.sources]
         path = f"{self.path}/all_chunks.json"
-        with open(path, 'w', encoding = "utf-8") as f:
-            json.dump(dict_sources, f, indent=4, ensure_ascii = False)
+        with open(path, 'w', encoding="utf-8") as f:
+            json.dump(dict_sources, f, indent=4, ensure_ascii=False)
         chunk_tokens = bm25s.tokenize(self.text_chunks, stopwords="english")
         chunks_range = [str(i) for i in range(len(self.text_chunks))]
         retriever = bm25s.BM25(corpus=chunks_range)

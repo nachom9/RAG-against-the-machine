@@ -7,6 +7,7 @@ from .models import MinimalSearchResults, MinimalSource, StudentSearchResults, M
 from src.utils import get_search_results, get_prompt, create_dir
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
+
 class RAGAplication:
 
     def index(self, max_chunk_size: int = 2000):
@@ -15,7 +16,7 @@ class RAGAplication:
         parser.get_chunks('vllm-0.10.1')
         print("Ingestion complete! Indices saved under data/processed/")
 
-    def search(self, query: str, k: int = 10)-> str:
+    def search(self, query: str, k: int = 10) -> str:
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
         sources = []
@@ -46,7 +47,6 @@ class RAGAplication:
         dict_result = search_result.model_dump()
         json_result = json.dumps(dict_result, indent=4, ensure_ascii=False)
         print(json_result)
-
 
     def search_dataset(self, dataset_path: str, save_directory: str, k: int = 10):
 
@@ -137,15 +137,12 @@ class RAGAplication:
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForCausalLM.from_pretrained(model_name)
-        with open (search_results_path, r, encoding='utf-8') as f:
+        with open(search_results_path, 'r', encoding='utf-8') as f:
             search_results = json.load(f)
             for result in search_results['search_results']:
                 sources = search["retrieved_sources"]
                 context = f"Question: {search['question']}\n\n"
-                question = search['question']
-
-
-
+                question = search_results['question']
 
     def evaluate(self):
         pass

@@ -3,7 +3,8 @@ from src.models import MinimalSearchResults, MinimalSource
 import json
 from pathlib import Path
 
-def get_search_results(query: str, k: int = 10)-> str:
+
+def get_search_results(query: str, k: int = 10) -> str:
     index_path = "data/processed/bm25_index"
     chunks_path = "data/processed/chunks/all_chunks.json"
     sources = []
@@ -34,6 +35,7 @@ def get_search_results(query: str, k: int = 10)-> str:
     dict_result = search_result.model_dump()
     return dict_result
 
+
 def create_dir(path: str):
     try:
         Path(path).mkdir(parents=True, exist_ok=True)
@@ -44,7 +46,8 @@ def create_dir(path: str):
         print(f"Error. Failed to create the directory '{path}': {e}")
         exit(1)
 
-def	get_prompt(sources, context: str, question: str) -> str:
+
+def get_prompt(sources, context: str, question: str) -> str:
 
     for i, source in enumerate(sources, 1):
         context += (
