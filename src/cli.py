@@ -1,9 +1,10 @@
 from src.ingest import Parser
+from pathlib import Path
 import fire
 import bm25s
 import json
 from .models import MinimalSearchResults, MinimalSource, StudentSearchResults, MinimalAnswer, StudentSearchResultsAndAnswer
-from src.utils import get_search_results
+from src.utils import get_search_results, get_prompt, create_dir
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class RAGAplication:
@@ -47,7 +48,7 @@ class RAGAplication:
         print(json_result)
 
 
-    def search_dataset(self, dataset_path: str, output_path: str, k: int = 10):
+    def search_dataset(self, dataset_path: str, save_directory: str, k: int = 10):
 
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
@@ -84,7 +85,9 @@ class RAGAplication:
             k=k
         )
         dict_searchs = searchs.model_dump()
-        with open(output_path, 'w', encoding='utf-8') as f:
+        create_dir(save_directory)
+        output_file_path = Path(save_directory) / Path(dataset_path).name
+        with open(output_file_path, 'w', encoding='utf-8') as f:
             json.dump(dict_searchs, f, indent=4, ensure_ascii=False)
 
     def answer(self, query: str, k: int = 10):
@@ -92,50 +95,7 @@ class RAGAplication:
         sources = search["retrieved_sources"]
         context = f"Question: {search['question']}\n\n"
         question = search['question']
-
-        for i, source in enumerate(sources, 1):
-            context += (
-                f"### Source {i}\n"
-                f"File: {source['file_path']}\n"
-                f"{source['text']}\n\n"
-            )
-
-        prompt = f"""<|im_start|>system
-You are a technical assistant answering questions about the vLLM repository.
-
-Use only the provided context.
-Do not use external knowledge.
-Ignore sources that are not directly relevant to the question.
-Do not infer that something is required unless the provided context explicitly says it.
-
-Give exactly one answer.
-Use at most 2 sentences.
-Do not repeat the answer.
-Do not provide alternative phrasings.
-Do not include a separate source list.
-Do not explain what each source contains.
-
-Your output must be exactly one short answer.
-The answer must end with one or more citations in this exact format: [Source N].
-Do not write an answer without a citation.
-Do not include a separate source list.
-If the context does not contain the answer, write exactly: The provided context is insufficient.
-<|im_end|>
-<|im_start|>user
-
-Context:
-{context}
-
-Question:
-{question}
-
-Required answer format:
-<answer text>. [Source N]
-
-/no_think
-<|im_end|>
-<|im_start|>assistant
-"""
+        prompt = get_prompt(sources, context, question)
 
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -173,8 +133,19 @@ Required answer format:
 
         print(result.model_dump_json(indent=4))
 
-    def answer_dataset(self):
-        pass
+    def answer_dataset(self, search_results_path: str, save_directory: str):
+        model_name = "Qwen/Qwen3-0.6B"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+        with open (search_results_path, r, encoding='utf-8') as f:
+            search_results = json.load(f)
+            for result in search_results['search_results']:
+                sources = search["retrieved_sources"]
+                context = f"Question: {search['question']}\n\n"
+                question = search['question']
+
+
+
 
     def evaluate(self):
         pass
