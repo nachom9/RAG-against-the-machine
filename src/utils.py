@@ -1,5 +1,5 @@
 import bm25s
-from src.models import MinimalSearchResults, MinimalSource
+from src.models import MinimalSearchResults, MinimalSource, MinimalAnswer, StudentSearchResultsAndAnswer
 import json
 from pathlib import Path
 
@@ -94,20 +94,19 @@ Required answer format:
 """
     return prompt
 
-def get_answer(self, model, tokenizer, query: str, k: int = 10):
+def get_answer(model, tokenizer, search, k: int = 10):
 
-    inputs = tokenizer(prompt, return_tensors='pt').to(model.device)
-    search = get_search_results(query, k)
     sources = search["retrieved_sources"]
     context = f"Question: {search['question']}\n\n"
     question = search['question']
+    question_id = search['question_id']
     prompt = get_prompt(sources, context, question)
+    inputs = tokenizer(prompt, return_tensors='pt').to(model.device)
 
     generated_ids = model.generate(
         **inputs,
         do_sample=False,
-        max_new_tokens=20,
-        repetition_penalty=1.2,
+        max_new_tokens=256,
         pad_token_id=tokenizer.eos_token_id,
         eos_token_id=tokenizer.eos_token_id
         )
@@ -119,6 +118,8 @@ def get_answer(self, model, tokenizer, query: str, k: int = 10):
     answer_text = answer_text.replace("<think>\n</think>", "")
     answer_text = answer_text.replace("<think>", "")
     answer_text = answer_text.replace("</think>", "")
+    answer_text = answer_text.replace("<answer>", "")
+    answer_text = answer_text.replace("</answer>", "")
     answer_text = answer_text.strip()
 
     minimal_answer = MinimalAnswer(

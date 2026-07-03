@@ -5,7 +5,7 @@ import bm25s
 import json
 from .models import MinimalSearchResults, MinimalSource, StudentSearchResults, MinimalAnswer, StudentSearchResultsAndAnswer
 from src.utils import get_search_results, get_prompt, create_dir, get_answer
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 
 
 class RAGAplication:
@@ -136,15 +136,17 @@ class RAGAplication:
     def answer_dataset(self, search_results_path: str, save_directory: str):
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        config = AutoConfig.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            config=config,
+            device_map="auto",
+            )
         with open(search_results_path, 'r', encoding='utf-8') as f:
             search_results = json.load(f)
-            for result in search_results['search_results']:
-                sources = search["retrieved_sources"]
-                context = f"Question: {search['question']}\n\n"
-                question = search_results['question']
-                answer = get_answer(model, tokenizer, query)
-                print(result)
+            for search_result in search_results['search_results']:
+                answer = get_answer(model, tokenizer, search_result)
+                print(answer)
 
     def evaluate(self):
         pass
