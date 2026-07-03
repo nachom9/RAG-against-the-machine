@@ -4,7 +4,7 @@ import fire
 import bm25s
 import json
 from .models import MinimalSearchResults, MinimalSource, StudentSearchResults, MinimalAnswer, StudentSearchResultsAndAnswer
-from src.utils import get_search_results, get_prompt, create_dir
+from src.utils import get_search_results, get_prompt, create_dir, get_answer
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
@@ -143,6 +143,8 @@ class RAGAplication:
                 sources = search["retrieved_sources"]
                 context = f"Question: {search['question']}\n\n"
                 question = search_results['question']
+                answer = get_answer(model, tokenizer, query)
+                print(result)
 
     def evaluate(self):
         pass

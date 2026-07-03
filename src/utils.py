@@ -93,3 +93,43 @@ Required answer format:
 <|im_start|>assistant
 """
     return prompt
+
+def get_answer(self, model, tokenizer, query: str, k: int = 10):
+
+    inputs = tokenizer(prompt, return_tensors='pt').to(model.device)
+    search = get_search_results(query, k)
+    sources = search["retrieved_sources"]
+    context = f"Question: {search['question']}\n\n"
+    question = search['question']
+    prompt = get_prompt(sources, context, question)
+
+    generated_ids = model.generate(
+        **inputs,
+        do_sample=False,
+        max_new_tokens=20,
+        repetition_penalty=1.2,
+        pad_token_id=tokenizer.eos_token_id,
+        eos_token_id=tokenizer.eos_token_id
+        )
+
+    prompt_length = inputs["input_ids"].shape[1]
+    output_ids = generated_ids[0][prompt_length:]
+
+    answer_text = tokenizer.decode(output_ids, skip_special_tokens=True)
+    answer_text = answer_text.replace("<think>\n</think>", "")
+    answer_text = answer_text.replace("<think>", "")
+    answer_text = answer_text.replace("</think>", "")
+    answer_text = answer_text.strip()
+
+    minimal_answer = MinimalAnswer(
+        question=question,
+        question_id='single_query',
+        retrieved_sources=sources,
+        answer=answer_text
+    )
+    result = StudentSearchResultsAndAnswer(
+        k=k,
+        search_results=[minimal_answer]
+    )
+
+    return (result.model_dump_json(indent=4))
