@@ -106,7 +106,7 @@ def get_answer(model, tokenizer, search, k: int = 10):
     generated_ids = model.generate(
         **inputs,
         do_sample=False,
-        max_new_tokens=256,
+        max_new_tokens=64,
         pad_token_id=tokenizer.eos_token_id,
         eos_token_id=tokenizer.eos_token_id
         )
@@ -128,9 +128,5 @@ def get_answer(model, tokenizer, search, k: int = 10):
         retrieved_sources=sources,
         answer=answer_text
     )
-    result = StudentSearchResultsAndAnswer(
-        k=k,
-        search_results=[minimal_answer]
-    )
 
-    return (result.model_dump_json(indent=4))
+    return (minimal_answer)

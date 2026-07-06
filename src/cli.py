@@ -6,6 +6,7 @@ import json
 from .models import MinimalSearchResults, MinimalSource, StudentSearchResults, MinimalAnswer, StudentSearchResultsAndAnswer
 from src.utils import get_search_results, get_prompt, create_dir, get_answer
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
+from tqdm import tqdm
 
 
 class RAGApplication:
@@ -138,6 +139,7 @@ class RAGApplication:
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         config = AutoConfig.from_pretrained(model_name)
+
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             config=config,
@@ -145,12 +147,18 @@ class RAGApplication:
             )
         with open(search_results_path, 'r', encoding='utf-8') as f:
             search_results = json.load(f)
-            for search_result in search_results['search_results']:
+            for search_result in tqdm(search_results['search_results'], desc="Generating answers"):
                 answer = get_answer(model, tokenizer, search_result)
                 answers.append(answer)
 
-        with open(save_directory, 'w', encoding='utf-8') as f:
-            
+        final_output = StudentSearchResultsAndAnswer(
+            search_results=answers,
+            k=search_results.get("k", 10)
+            )
+        create_dir(save_directory)
+        output_file_path = Path(save_directory) / Path(search_results_path).name
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            json.dump(final_output.model_dump(), f, indent=4, ensure_ascii=False)
 
     def evaluate(self):
         pass
