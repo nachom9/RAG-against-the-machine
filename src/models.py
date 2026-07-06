@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Union
 import uuid
 
 
@@ -21,7 +21,7 @@ class AnsweredQuestion(UnansweredQuestion):
 
 
 class RagDataset(BaseModel):
-    rag_questions: List[AnsweredQuestion | UnansweredQuestion]
+    rag_questions: List[Union[AnsweredQuestion, UnansweredQuestion]]
 
 
 class MinimalSearchResults(BaseModel):
@@ -39,5 +39,6 @@ class StudentSearchResults(BaseModel):
     k: int
 
 
-class StudentSearchResultsAndAnswer(StudentSearchResults):
+class StudentSearchResultsAndAnswer(BaseModel):
     search_results: List[MinimalAnswer]
+    k: int

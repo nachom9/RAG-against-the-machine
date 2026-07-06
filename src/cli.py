@@ -8,7 +8,7 @@ from src.utils import get_search_results, get_prompt, create_dir, get_answer
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 
 
-class RAGAplication:
+class RAGApplication:
 
     def index(self, max_chunk_size: int = 2000):
         parser = Parser(max_chunk_size)
@@ -134,6 +134,7 @@ class RAGAplication:
         print(result.model_dump_json(indent=4))
 
     def answer_dataset(self, search_results_path: str, save_directory: str):
+        answers = []
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         config = AutoConfig.from_pretrained(model_name)
@@ -146,7 +147,10 @@ class RAGAplication:
             search_results = json.load(f)
             for search_result in search_results['search_results']:
                 answer = get_answer(model, tokenizer, search_result)
-                print(answer)
+                answers.append(answer)
+
+        with open(save_directory, 'w', encoding='utf-8') as f:
+            
 
     def evaluate(self):
         pass
@@ -154,5 +158,5 @@ class RAGAplication:
 
 def main() -> None:
     print("\n========= Hello from rag-against-the-machine! =========\n")
-    fire.Fire(RAGAplication)
+    fire.Fire(RAGApplication)
     print("\n========= Program ended =========\n")
