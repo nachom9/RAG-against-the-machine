@@ -14,7 +14,7 @@ class RAGApplication:
     def index(self, max_chunk_size: int = 2000):
         parser = Parser(max_chunk_size)
         print("Ingestion on process...")
-        parser.get_chunks('vllm-0.10.1')
+        parser.get_chunks('data/raw/vllm-0.10.1')
         print("Ingestion complete! Indices saved under data/processed/")
 
     def search(self, query: str, k: int = 10) -> str:
