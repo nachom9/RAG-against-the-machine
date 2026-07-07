@@ -106,7 +106,7 @@ def get_answer(model, tokenizer, search, k: int = 10):
     generated_ids = model.generate(
         **inputs,
         do_sample=False,
-        max_new_tokens=64,
+        max_new_tokens=48,
         pad_token_id=tokenizer.eos_token_id,
         eos_token_id=tokenizer.eos_token_id
         )
@@ -120,11 +120,14 @@ def get_answer(model, tokenizer, search, k: int = 10):
     answer_text = answer_text.replace("</think>", "")
     answer_text = answer_text.replace("<answer>", "")
     answer_text = answer_text.replace("</answer>", "")
+    answer_text = answer_text.replace("<answer text>", "")
+    answer_text = answer_text.replace("</answer text>", "")
+    answer_text = answer_text.replace("<answer", "")
     answer_text = answer_text.strip()
 
     minimal_answer = MinimalAnswer(
         question=question,
-        question_id='single_query',
+        question_id=question_id,
         retrieved_sources=sources,
         answer=answer_text
     )
