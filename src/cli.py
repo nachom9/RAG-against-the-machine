@@ -160,8 +160,33 @@ class RAGApplication:
         with open(output_file_path, 'w', encoding='utf-8') as f:
             json.dump(final_output.model_dump(), f, indent=4, ensure_ascii=False)
 
-    def evaluate(self):
-        pass
+    def evaluate(self, search_results_path: str, dataset_path: str):
+        correct_sources = 0
+        i = 0
+        with open(search_results_path, 'r', encoding='utf-8') as f:
+            search_results = json.load(f)
+        with open(dataset_path, 'r', encoding='utf-8') as d:
+            dataset = json.load(d)
+
+        for search_result in search_results['search_results']:
+            commun_chars = 0
+            iuo_metric = 0
+            data_file_path = dataset['rag_questions'][i]['sources'][0]['file_path']
+            for source in search_result['retrieved_sources']:
+                file_path = source['file_path']
+                if data_file_path == file_path:
+                    first_char = source['first_character_index']
+                    last_char = source['last_character_index']
+                    data_first_char = dataset['rag_questions'][i]['sources'][0]['first_character_index']
+                    data_last_char = dataset['rag_questions'][i]['sources'][0]['last_character_index']
+                    commun_chars = max(0, min(last_char, data_last_char) - max(first_char, data_first_char))
+                    total_size = (last_char - first_char) + (data_last_char - data_first_char) - commun_chars
+                    iuo_metric = commun_chars / total_size
+                    if iuo_metric >= 0.05:
+                        correct_sources += 1
+                        break
+            i += 1
+        print(correct_sources / i)
 
 
 def main() -> None:
