@@ -47,7 +47,8 @@ class RAGApplication:
 
         dict_result = search_result.model_dump()
         json_result = json.dumps(dict_result, indent=4, ensure_ascii=False)
-        print(json_result)
+        for s in dict_result['retrieved_sources']:
+            print(f"{s['file_path']} [{s['first_character_index']}:{s['last_character_index']}]")
 
     def search_dataset(self, dataset_path: str, save_directory: str, k: int = 10):
 
