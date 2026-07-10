@@ -162,6 +162,7 @@ class RAGApplication:
 
     def evaluate(self, search_results_path: str, dataset_path: str):
         k_list = [1, 3, 5, 10]
+        results = []
 
         with open(search_results_path, 'r', encoding='utf-8') as f:
             search_results = json.load(f)
@@ -189,7 +190,11 @@ class RAGApplication:
                             correct_sources += 1
                             break
                 i += 1
-            print(correct_sources / i)
+            results.append(correct_sources / i)
+        print(f"Recall@1: {results[0]:.2f} "
+        f"Recall@3: {results[1]:.2f} "
+        f"Recall@5: {results[2]:.2f} "
+        f"Recall@10: {results[3]:.2f}")
 
 
 def main() -> None:
