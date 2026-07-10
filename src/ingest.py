@@ -16,61 +16,66 @@ class Parser:
     def get_chunks(self, path: str):
         files = [str(f) for f in Path(path).rglob("*") if f.is_file()]
         ignore = ["Zone.Identifier", ".git", "/."]
+        if len(files) < 11000:
+            print("Error. Files are missing")
+            exit(1)
+
         for file in files:
             if any(word in file for word in ignore):
                 continue
             end_check = False
             last_char = 0
             first_char = 0
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except Exception as e:
+                print(f"Error. Couldn't open file '{file}': {e}")
+                continue
+
             if file.endswith(".py"):
-                with open(file, 'r') as f:
-                    content = f.read()
-                    while not end_check and last_char < len(content):
-                        chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
-                        last_char = (
-                            max(content[first_char:chunk_limit].rfind("class"),
-                                content[first_char:chunk_limit].rfind("def"))
-                        )
-                        if last_char <= 0:
-                            last_char = chunk_limit
-                        else:
-                            last_char += first_char
-                        if last_char == len(content):
-                            end_check = True
-                        chunk = content[first_char:last_char]
-                        self.save_chunk(chunk, file, first_char, last_char)
-                        first_char = last_char
-            elif file.endswith(".md"):
-                with open(file, 'r') as f:
-                    content = f.read()
-                    while not end_check and last_char < len(content):
-                        chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
-                        last_char = content[first_char:chunk_limit].rfind("\n# ")
-                        if last_char <= 0:
-                            last_char = content[first_char:chunk_limit].rfind("\n## ")
-                        if last_char <= 0:
-                            last_char = chunk_limit
-                        else:
-                            last_char += first_char
-                        if last_char == len(content):
-                            end_check = True
-                        chunk = content[first_char:last_char]
-                        self.save_chunk(chunk, file, first_char, last_char)
-                        first_char = last_char
-            else:
-                with open(file, 'r') as f:
-                    try:
-                        content = f.read()
-                    except Exception:
-                        continue
-                    while not end_check and last_char < len(content):
-                        chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                while not end_check and last_char < len(content):
+                    chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                    last_char = (
+                        max(content[first_char:chunk_limit].rfind("class"),
+                            content[first_char:chunk_limit].rfind("def"))
+                    )
+                    if last_char <= 0:
                         last_char = chunk_limit
-                        if last_char == len(content):
-                            end_check = True
-                        chunk = content[first_char:last_char]
-                        self.save_chunk(chunk, file, first_char, last_char)
-                        first_char = last_char
+                    else:
+                        last_char += first_char
+                    if last_char == len(content):
+                        end_check = True
+                    chunk = content[first_char:last_char]
+                    self.save_chunk(chunk, file, first_char, last_char)
+                    first_char = last_char
+
+            elif file.endswith(".md"):
+                while not end_check and last_char < len(content):
+                    chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                    last_char = content[first_char:chunk_limit].rfind("\n# ")
+                    if last_char <= 0:
+                        last_char = content[first_char:chunk_limit].rfind("\n## ")
+                    if last_char <= 0:
+                        last_char = chunk_limit
+                    else:
+                        last_char += first_char
+                    if last_char == len(content):
+                        end_check = True
+                    chunk = content[first_char:last_char]
+                    self.save_chunk(chunk, file, first_char, last_char)
+                    first_char = last_char
+
+            else:
+                while not end_check and last_char < len(content):
+                    chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                    last_char = chunk_limit
+                    if last_char == len(content):
+                        end_check = True
+                    chunk = content[first_char:last_char]
+                    self.save_chunk(chunk, file, first_char, last_char)
+                    first_char = last_char
+
         self.generate_json()
 
     def save_chunk(self, content: str, path: str, first_char: int, last_char: int):

@@ -12,20 +12,30 @@ from tqdm import tqdm
 class RAGApplication:
 
     def index(self, max_chunk_size: int = 2000):
+        if max_chunk_size < 150:
+            print("Error. Chunk size must be at least 150")
+            exit(1)
         parser = Parser(max_chunk_size)
         print("Ingestion on process...")
         parser.get_chunks('data/raw/vllm-0.10.1')
         print("Ingestion complete! Indices saved under data/processed/")
 
     def search(self, query: str, k: int = 10) -> str:
+        if k < 1 or k > 10:
+            print("Error. k value must be between 1 and 10")
+            exit(1)
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
         sources = []
 
         retriever = bm25s.BM25.load(index_path, load_corpus=True)
 
-        with open(chunks_path, 'r', encoding="utf-8") as f:
-            chunks = json.load(f)
+        try:
+            with open(chunks_path, 'r', encoding="utf-8") as f:
+                chunks = json.load(f)
+        except Exception as e:
+            print(f"Error. Couldn't open file '{chunks_path}': {e}")
+            exit(1)
 
         query_tokens = bm25s.tokenize(query, stopwords="english")
         results = retriever.retrieve(query_tokens, k=min(k, len(chunks)), return_as="documents")
@@ -46,21 +56,35 @@ class RAGApplication:
         )
 
         dict_result = search_result.model_dump()
-        json_result = json.dumps(dict_result, indent=4, ensure_ascii=False)
         for s in dict_result['retrieved_sources']:
             print(f"{s['file_path']} [{s['first_character_index']}:{s['last_character_index']}]")
 
     def search_dataset(self, dataset_path: str, save_directory: str, k: int = 10):
-
+        if k < 1 or k > 10:
+            print("Error. k value must be between 1 and 10")
+            exit(1)
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
         search_results_list = []
         retriever = bm25s.BM25.load(index_path, load_corpus=True)
-        with open(chunks_path, 'r', encoding="utf-8") as f:
-            chunks = json.load(f)
 
-        with open(dataset_path, 'r', encoding='utf-8') as f:
-            dataset = json.load(f)
+        try:
+            with open(chunks_path, 'r', encoding="utf-8") as f:
+                chunks = json.load(f)
+        except Exception as e:
+            print(f"Error. Couldn't open file '{chunks_path}': {e}")
+            exit(1)
+        try:
+            with open(dataset_path, 'r', encoding='utf-8') as f:
+                dataset = json.load(f)
+        except Exception as e:
+            print(f"Error. Couldn't open file '{dataset_path}': {e}")
+            exit(1)
+
+        if len(dataset['rag_questions']) < 1:
+            print("Error. There is no questions")
+            exit(1)
+
         for question in dataset['rag_questions']:
             sources = []
             query = question['question']
@@ -93,6 +117,9 @@ class RAGApplication:
             json.dump(dict_searchs, f, indent=4, ensure_ascii=False)
 
     def answer(self, query: str, k: int = 10):
+        if k < 1 or k > 10:
+            print("Error. k value must be between 1 and 10")
+            exit(1)
         search = get_search_results(query, k)
         sources = search["retrieved_sources"]
         context = f"Question: {search['question']}\n\n"
