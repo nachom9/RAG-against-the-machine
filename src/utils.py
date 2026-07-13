@@ -2,6 +2,7 @@ import bm25s
 from src.models import MinimalSearchResults, MinimalSource, MinimalAnswer, StudentSearchResultsAndAnswer
 import json
 from pathlib import Path
+import re
 
 
 def get_search_results(query: str, k: int = 10) -> str:
@@ -56,13 +57,14 @@ def get_prompt(sources, context: str, question: str) -> str:
             f"{source['text']}\n\n"
         )
 
-    prompt = f"""<|im_start|>system
+    prompt = """<|im_start|>system
 You are a technical assistant answering questions about the vLLM repository.
 
 Use only the provided context.
 Do not use external knowledge.
 Ignore sources that are not directly relevant to the question.
-Do not infer that something is required unless the provided context explicitly says it.
+Do not infer that something is required unless """ + \
+        """the provided context explicitly says it.
 
 Give exactly one answer.
 Use at most 2 sentences.
@@ -72,26 +74,35 @@ Do not include a separate source list.
 Do not explain what each source contains.
 
 Your output must be exactly one short answer.
-The answer must end with one or more citations in this exact format: [Source N].
+The answer must end with one or more citations """ + \
+        """in this exact format: [Source N].
 Do not write an answer without a citation.
 Do not include a separate source list.
-If the context does not contain the answer, write exactly: The provided context is insufficient.
+If the context does not contain the answer, write exactly: """ + \
+        """The provided context is insufficient.
 <|im_end|>
 <|im_start|>user
-
-Context:
-{context}
-
-Question:
-{question}
-
-Required answer format:
-<answer text>. [Source N]
-
-/no_think
-<|im_end|>
-<|im_start|>assistant
 """
+
+# - Every factual claim must include a source citation.
+# - If the context does not contain enough information, say:
+#   "The provided context is insufficient."
+# - Do not show reasoning or thinking.
+# - Do not invent details that are not supported by the context.
+# - Do not continue the conversation.
+# - Do not write a new Human, User, Assistant, Question, or Answer turn.
+# - Do not explain your reasoning.
+# - Return only the final answer.
+
+    prompt += "Context:\n" + context + "\n"
+    # out += "Answer the question and list sources used to answer:\n"
+    prompt += "Question:\n" + question + "\n"
+    prompt += "Required answer format:\n<answer text>. [Source N]"
+    prompt += "\n\n/no_think\n"
+    # out += "\nCite the sources you use with [Source N].\n"
+    prompt += "<|im_end|>\n"
+    # out += "Answer:\n"
+    prompt += "<|im_start|>assistant\n"
     return prompt
 
 def get_answer(model, tokenizer, search, k: int = 10):
@@ -106,7 +117,7 @@ def get_answer(model, tokenizer, search, k: int = 10):
     generated_ids = model.generate(
         **inputs,
         do_sample=False,
-        max_new_tokens=48,
+        max_new_tokens=96,
         pad_token_id=tokenizer.eos_token_id,
         eos_token_id=tokenizer.eos_token_id
         )
@@ -124,6 +135,25 @@ def get_answer(model, tokenizer, search, k: int = 10):
     answer_text = answer_text.replace("</answer text>", "")
     answer_text = answer_text.replace("<answer", "")
     answer_text = answer_text.strip()
+
+    clean = answer_text.strip()
+    clean = clean.replace(".", "")
+    clean = clean.replace(",", "")
+
+    if (
+        "context is insufficient" in clean
+        or "Source N" in clean
+        or clean.endswith("[Source")
+        or clean.endswith("[")
+        or clean.endswith(",")
+        or re.fullmatch(r'(\s*\[Source\s+\d+\]\s*)+', clean)
+        or clean.startswith('.')
+        or answer_text.startswith('[Source')
+    ):
+        answer_text = "The provided context is insufficient."
+
+    if answer_text != "The provided context is insufficient.":
+        answer_text = re.sub(r'(?<!\s)\[Source', ' [Source', answer_text)
 
     minimal_answer = MinimalAnswer(
         question=question,

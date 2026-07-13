@@ -85,26 +85,30 @@ class RAGApplication:
             print("Error. There is no questions")
             exit(1)
 
-        for question in dataset['rag_questions']:
-            sources = []
-            query = question['question']
-            query_tokens = bm25s.tokenize(query, stopwords="english")
-            results = retriever.retrieve(query_tokens, k=min(k, len(chunks)), return_as="documents")
-            for r in results[0]:
-                chunk_data = chunks[r['id']]
-                validate_source = MinimalSource(
-                        file_path=chunk_data['file_path'],
-                        first_character_index=chunk_data['first_character_index'],
-                        last_character_index=chunk_data['last_character_index'],
-                        text=chunk_data['text']
-                )
-                sources.append(validate_source)
-            search_result = MinimalSearchResults(
-                question_id=question['question_id'],
-                question=query,
-                retrieved_sources=sources,
-                )
-            search_results_list.append(search_result)
+        try:
+            for question in dataset['rag_questions']:
+                sources = []
+                query = question['question']
+                query_tokens = bm25s.tokenize(query, stopwords="english")
+                results = retriever.retrieve(query_tokens, k=min(k, len(chunks)), return_as="documents")
+                for r in results[0]:
+                    chunk_data = chunks[r['id']]
+                    validate_source = MinimalSource(
+                            file_path=chunk_data['file_path'],
+                            first_character_index=chunk_data['first_character_index'],
+                            last_character_index=chunk_data['last_character_index'],
+                            text=chunk_data['text']
+                    )
+                    sources.append(validate_source)
+                search_result = MinimalSearchResults(
+                    question_id=question['question_id'],
+                    question=query,
+                    retrieved_sources=sources,
+                    )
+                search_results_list.append(search_result)
+        except KeyError:
+            print("Error. Wrong JSON format")
+            exit(1)
 
         searchs = StudentSearchResults(
             search_results=search_results_list,
@@ -188,6 +192,37 @@ class RAGApplication:
         output_file_path = Path(save_directory) / Path(search_results_path).name
         with open(output_file_path, 'w', encoding='utf-8') as f:
             json.dump(final_output.model_dump(), f, indent=4, ensure_ascii=False)
+
+    def answer_dataset_test(self, search_results_path: str, save_directory: str):
+        answers = []
+
+        model_name = "Qwen/Qwen3-0.6B"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        config = AutoConfig.from_pretrained(model_name)
+
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            config=config,
+            device_map="auto",
+        )
+
+        with open(search_results_path, "r", encoding="utf-8") as f:
+            search_results = json.load(f)
+
+        for search_result in tqdm(search_results["search_results"], desc="Generating answers"):
+            answer = get_answer(model, tokenizer, search_result)
+
+            answers.append({
+                "question": answer.question,
+                "answer": answer.answer
+            })
+
+        create_dir(save_directory)
+        output_file_path = Path(save_directory) / Path(search_results_path).name
+
+        with open(output_file_path, "w", encoding="utf-8") as f:
+            json.dump(answers, f, indent=4, ensure_ascii=False)
+
 
     def evaluate(self, search_results_path: str, dataset_path: str):
         k_list = [1, 3, 5, 10]
