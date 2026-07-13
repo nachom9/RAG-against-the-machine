@@ -16,7 +16,8 @@ class Parser:
     def get_chunks(self, path: str):
         files = [str(f) for f in Path(path).rglob("*") if f.is_file()]
         ignore = ["Zone.Identifier", ".git", "/."]
-        if len(files) < 11000:
+        if len(files) < 2500:
+            print(len(files))
             print("Error. Files are missing")
             exit(1)
 

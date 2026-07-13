@@ -115,6 +115,7 @@ class RAGApplication:
         output_file_path = Path(save_directory) / Path(dataset_path).name
         with open(output_file_path, 'w', encoding='utf-8') as f:
             json.dump(dict_searchs, f, indent=4, ensure_ascii=False)
+        print(f"Saved search_results to {output_file_path}")
 
     def answer(self, query: str, k: int = 10):
         if k < 1 or k > 10:
@@ -219,10 +220,10 @@ class RAGApplication:
                             break
                 i += 1
             results.append(correct_sources / i)
-        print(f"Recall@1: {results[0]:.2f} "
-        f"Recall@3: {results[1]:.2f} "
-        f"Recall@5: {results[2]:.2f} "
-        f"Recall@10: {results[3]:.2f}")
+        print(f"Recall@1: {results[0]:.3f} "
+        f"Recall@3: {results[1]:.3f} "
+        f"Recall@5: {results[2]:.3f} "
+        f"Recall@10: {results[3]:.3f}")
 
 
 def main() -> None:
