@@ -84,24 +84,11 @@ If the context does not contain the answer, write exactly: """ + \
 <|im_start|>user
 """
 
-# - Every factual claim must include a source citation.
-# - If the context does not contain enough information, say:
-#   "The provided context is insufficient."
-# - Do not show reasoning or thinking.
-# - Do not invent details that are not supported by the context.
-# - Do not continue the conversation.
-# - Do not write a new Human, User, Assistant, Question, or Answer turn.
-# - Do not explain your reasoning.
-# - Return only the final answer.
-
     prompt += "Context:\n" + context + "\n"
-    # out += "Answer the question and list sources used to answer:\n"
     prompt += "Question:\n" + question + "\n"
     prompt += "Required answer format:\n<answer text>. [Source N]"
     prompt += "\n\n/no_think\n"
-    # out += "\nCite the sources you use with [Source N].\n"
     prompt += "<|im_end|>\n"
-    # out += "Answer:\n"
     prompt += "<|im_start|>assistant\n"
     return prompt
 
