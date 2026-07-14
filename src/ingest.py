@@ -20,9 +20,9 @@ class Parser:
             max_chunk_size: Maximum number of characters allowed in each
                 generated text chunk.
         """
-        self.text_chunks: list = []
+        self.text_chunks: list[str] = []
         self.max_chunk_size = max_chunk_size
-        self.sources: list = []
+        self.sources: list[MinimalSource] = []
         self.path: str = "data/processed/chunks"
 
     def get_chunks(self, path: str) -> None:

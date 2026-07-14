@@ -219,14 +219,20 @@ class RAGApplication:
 
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model: Any = AutoModelForCausalLM.from_pretrained(model_name)
+        config = AutoConfig.from_pretrained(model_name)
+
+        model: Any = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            config=config,
+            device_map="auto",
+            )
+
         inputs = tokenizer(prompt, return_tensors='pt').to(model.device)
 
         generated_ids = model.generate(
             **inputs,
             do_sample=False,
-            max_new_tokens=20,
-            repetition_penalty=1.2,
+            max_new_tokens=96,
             pad_token_id=tokenizer.eos_token_id,
             eos_token_id=tokenizer.eos_token_id
             )
