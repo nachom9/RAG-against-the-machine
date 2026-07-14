@@ -1,11 +1,13 @@
 import bm25s
-from src.models import MinimalSearchResults, MinimalSource, MinimalAnswer, StudentSearchResultsAndAnswer
+from src.models import MinimalSearchResults, MinimalSource, MinimalAnswer
 import json
 from pathlib import Path
 import re
+from typing import Any, cast
+from transformers import PreTrainedTokenizerBase
 
 
-def get_search_results(query: str, k: int = 10) -> str:
+def get_search_results(query: str, k: int = 10) -> dict[str, Any]:
     index_path = "data/processed/bm25_index"
     chunks_path = "data/processed/chunks/all_chunks.json"
     sources = []
@@ -16,7 +18,9 @@ def get_search_results(query: str, k: int = 10) -> str:
         chunks = json.load(f)
 
     query_tokens = bm25s.tokenize(query, stopwords="english")
-    results = retriever.retrieve(query_tokens, k=min(k, len(chunks)), return_as="documents")
+    results = retriever.retrieve(query_tokens,
+                                 k=min(k, len(chunks)),
+                                 return_as="documents")
     for r in results[0]:
         chunk_data = chunks[r['id']]
         validate_source = MinimalSource(
@@ -37,18 +41,21 @@ def get_search_results(query: str, k: int = 10) -> str:
     return dict_result
 
 
-def create_dir(path: str):
+def create_dir(path: str) -> None:
     try:
         Path(path).mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        print(f"Error. Permission denied while creating the directory '{path}'")
+        print(f"Error. Permission denied while "
+              f"creating the directory '{path}'")
         exit(1)
     except OSError as e:
         print(f"Error. Failed to create the directory '{path}': {e}")
         exit(1)
 
 
-def get_prompt(sources, context: str, question: str) -> str:
+def get_prompt(sources: list[dict[str, Any]],
+               context: str,
+               question: str) -> str:
 
     for i, source in enumerate(sources, 1):
         context += (
@@ -92,7 +99,11 @@ If the context does not contain the answer, write exactly: """ + \
     prompt += "<|im_start|>assistant\n"
     return prompt
 
-def get_answer(model, tokenizer, search, k: int = 10):
+
+def get_answer(model: Any,
+               tokenizer: PreTrainedTokenizerBase,
+               search: dict[str, Any],
+               k: int = 10) -> MinimalAnswer:
 
     sources = search["retrieved_sources"]
     context = f"Question: {search['question']}\n\n"
@@ -112,7 +123,10 @@ def get_answer(model, tokenizer, search, k: int = 10):
     prompt_length = inputs["input_ids"].shape[1]
     output_ids = generated_ids[0][prompt_length:]
 
-    answer_text = tokenizer.decode(output_ids, skip_special_tokens=True)
+    answer_text = cast(
+                       str,
+                       tokenizer.decode(output_ids, skip_special_tokens=True),
+                       )
     answer_text = answer_text.replace("<think>\n</think>", "")
     answer_text = answer_text.replace("<think>", "")
     answer_text = answer_text.replace("</think>", "")

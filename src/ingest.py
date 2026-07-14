@@ -13,7 +13,7 @@ class Parser:
         self.sources: list = []
         self.path: str = "data/processed/chunks"
 
-    def get_chunks(self, path: str):
+    def get_chunks(self, path: str) -> None:
         files = [str(f) for f in Path(path).rglob("*") if f.is_file()]
         ignore = ["Zone.Identifier", ".git", "/."]
         if len(files) < 2500:
@@ -36,7 +36,8 @@ class Parser:
 
             if file.endswith(".py"):
                 while not end_check and last_char < len(content):
-                    chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                    chunk_limit = min(first_char + (self.max_chunk_size - 1),
+                                      len(content))
                     last_char = (
                         max(content[first_char:chunk_limit].rfind("class"),
                             content[first_char:chunk_limit].rfind("def"))
@@ -53,10 +54,12 @@ class Parser:
 
             elif file.endswith(".md"):
                 while not end_check and last_char < len(content):
-                    chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                    chunk_limit = min(first_char + (self.max_chunk_size - 1),
+                                      len(content))
                     last_char = content[first_char:chunk_limit].rfind("\n# ")
                     if last_char <= 0:
-                        last_char = content[first_char:chunk_limit].rfind("\n## ")
+                        last_char = (content[first_char:chunk_limit]
+                                     .rfind("\n## "))
                     if last_char <= 0:
                         last_char = chunk_limit
                     else:
@@ -69,7 +72,8 @@ class Parser:
 
             else:
                 while not end_check and last_char < len(content):
-                    chunk_limit = min(first_char + (self.max_chunk_size - 1), len(content))
+                    chunk_limit = min(first_char + (self.max_chunk_size - 1),
+                                      len(content))
                     last_char = chunk_limit
                     if last_char == len(content):
                         end_check = True
@@ -79,7 +83,11 @@ class Parser:
 
         self.generate_json()
 
-    def save_chunk(self, content: str, path: str, first_char: int, last_char: int):
+    def save_chunk(self,
+                   content: str,
+                   path: str,
+                   first_char: int,
+                   last_char: int) -> None:
 
         chunk = MinimalSource(
             file_path=path,
@@ -90,7 +98,7 @@ class Parser:
         self.text_chunks.append(content)
         self.sources.append(chunk)
 
-    def generate_json(self):
+    def generate_json(self) -> None:
         create_dir(self.path)
 
         dict_sources = [chunk.model_dump() for chunk in self.sources]
