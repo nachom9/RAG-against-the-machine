@@ -6,14 +6,44 @@ from src.utils import create_dir
 
 
 class Parser:
+    """Parses source files and creates searchable document chunks.
 
+    This class is responsible for reading source files from a directory,
+    splitting their contents into smaller chunks according to the configured
+    maximum size, storing metadata about each chunk, and generating the JSON
+    files and BM25 index required by the retrieval system.
+    """
     def __init__(self, max_chunk_size: int):
+        """Initializes the parser configuration.
+
+        Args:
+            max_chunk_size: Maximum number of characters allowed in each
+                generated text chunk.
+        """
         self.text_chunks: list = []
         self.max_chunk_size = max_chunk_size
         self.sources: list = []
         self.path: str = "data/processed/chunks"
 
     def get_chunks(self, path: str) -> None:
+        """Extracts and stores chunks from all supported files in a directory.
+
+        The method recursively searches for files inside the provided path,
+        ignores unsupported or unwanted files, splits the content according to
+        the file type, and stores each generated chunk together with its source
+        metadata. Python files are split preferentially at class or function
+        definitions, Markdown files at heading boundaries, and other files by
+        simple character limits.
+
+        Args:
+            path: Directory containing the source files to parse.
+
+        Output:
+            Generates an ``all_chunks.json`` file containing the extracted
+            chunks and their metadata, and creates a BM25 index used for later
+            document retrieval. Prints error messages if files cannot be
+            processed.
+        """
         files = [str(f) for f in Path(path).rglob("*") if f.is_file()]
         ignore = ["Zone.Identifier", ".git", "/."]
         if len(files) < 2500:
@@ -88,6 +118,24 @@ class Parser:
                    path: str,
                    first_char: int,
                    last_char: int) -> None:
+        """Stores a generated text chunk and its metadata.
+
+        The method creates a validated source object containing information
+        about the chunk location and content, then stores both the raw text and
+        metadata internally for later JSON generation and indexing.
+
+        Args:
+            content: Text content contained in the generated chunk.
+            path: Original file path where the chunk was extracted from.
+            first_char: Character index where the chunk starts in the original
+                file.
+            last_char: Character index where the chunk ends in the original
+                file.
+
+        Output:
+            Adds the chunk content and its metadata to the parser internal
+            collections.
+        """
 
         chunk = MinimalSource(
             file_path=path,
@@ -99,6 +147,17 @@ class Parser:
         self.sources.append(chunk)
 
     def generate_json(self) -> None:
+        """Generates the chunk metadata file and creates the BM25 index.
+
+        The method saves all extracted chunks as a JSON file containing the
+        source metadata, tokenizes the chunk contents, builds a BM25 retrieval
+        index, and stores the index on disk for future searches.
+
+        Output:
+            Creates an ``all_chunks.json`` file containing all generated
+            chunks and a BM25 index directory used by the retrieval system.
+            Prints an error message and exits if the index cannot be saved.
+        """
         create_dir(self.path)
 
         dict_sources = [chunk.model_dump() for chunk in self.sources]

@@ -13,8 +13,31 @@ from typing import cast, Any
 
 
 class RAGApplication:
+    """Main application class for the retrieval augmented generation pipeline.
+
+    This class provides the main workflows required by the RAG system,
+    including document indexing, document retrieval, answer generation, and
+    evaluation of retrieval performance. The methods exposed by this class
+    are intended to be used as application commands.
+    """
 
     def index(self, max_chunk_size: int = 2000) -> None:
+        """Indexes the raw documents and creates the retrieval structures.
+
+        The method parses the source documents, splits them into chunks with
+        the specified maximum size, and stores the generated chunks and index
+        files required for later retrieval operations.
+
+        Args:
+            max_chunk_size: Maximum number of characters allowed in each
+                generated chunk.
+
+        Output:
+            Prints progress messages indicating the indexing status. The
+            generated chunks and search indices are stored in the processed
+            data directory.
+        """
+
         if max_chunk_size < 150:
             print("Error. Chunk size must be at least 150")
             exit(1)
@@ -24,6 +47,21 @@ class RAGApplication:
         print("Ingestion complete! Indices saved under data/processed/")
 
     def search(self, query: str, k: int = 10) -> None:
+        """Retrieves the most relevant document chunks for a query.
+
+        The method tokenizes the input query, performs a BM25 retrieval over
+        the previously created index, and displays information about the
+        retrieved document sources.
+
+        Args:
+            query: Text query used to retrieve relevant document chunks.
+            k: Maximum number of relevant chunks to retrieve.
+
+        Output:
+            Prints the retrieved sources, including each source file path and
+            the character index range corresponding to the retrieved chunk.
+        """
+
         if k < 1 or k > 10:
             print("Error. k value must be between 1 and 10")
             exit(1)
@@ -66,6 +104,25 @@ class RAGApplication:
 
     def search_dataset(self, dataset_path: str,
                        save_directory: str, k: int = 10) -> None:
+        """Retrieves relevant document chunks for all questions in a dataset.
+
+        The method loads a dataset containing RAG questions, performs BM25
+        retrieval for every question, validates the retrieved sources, and
+        creates a structured output containing the retrieval results.
+
+        Args:
+            dataset_path: Path to the JSON dataset containing the questions.
+            save_directory: Directory where the generated search results file
+                will be stored.
+            k: Maximum number of document chunks retrieved for each question.
+
+        Output:
+            Generates a JSON file containing the retrieved sources for every
+            question in the dataset. The file includes the original questions,
+            question identifiers, and the retrieved document metadata.
+            Prints the location of the generated output file.
+        """
+
         if k < 1 or k > 10:
             print("Error. k value must be between 1 and 10")
             exit(1)
@@ -136,6 +193,21 @@ class RAGApplication:
         print(f"Saved search_results to {output_file_path}")
 
     def answer(self, query: str, k: int = 10) -> None:
+        """Generates an answer for a single user query using the RAG pipeline.
+
+        The method retrieves relevant document chunks, builds a prompt using
+        the retrieved context, runs the language model to generate an answer,
+        and removes unnecessary model-specific tokens from the generated text.
+
+        Args:
+            query: Question to answer using the retrieved context.
+            k: Number of document chunks to retrieve before generation.
+
+        Output:
+            Prints a JSON representation containing the question, retrieved
+            sources, generated answer, and retrieval configuration.
+        """
+
         if k < 1 or k > 10:
             print("Error. k value must be between 1 and 10")
             exit(1)
@@ -188,6 +260,23 @@ class RAGApplication:
     def answer_dataset(self,
                        search_results_path: str,
                        save_directory: str) -> None:
+        """Generates answers for all retrieved questions in a dataset.
+
+        The method loads previously generated search results, uses the language
+        model to answer each question based on its retrieved context, and saves
+        the complete question-answer results.
+
+        Args:
+            search_results_path: Path to the JSON file containing retrieval
+                results for each question.
+            save_directory: Directory where the generated answers JSON file
+                will be saved.
+
+        Output:
+            Generates a JSON file containing the generated answers together
+            with their corresponding questions and retrieved sources.
+        """
+
         answers = []
         model_name = "Qwen/Qwen3-0.6B"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -254,6 +343,24 @@ class RAGApplication:
     def evaluate(self,
                  search_results_path: str,
                  dataset_path: str) -> None:
+        """Evaluates the retrieval quality of the generated search results.
+
+        The method compares the retrieved document sources against the expected
+        sources from the evaluation dataset. It computes Recall@k values for
+        different retrieval limits by measuring whether the retrieved chunks
+        sufficiently overlap with the expected source locations.
+
+        Args:
+            search_results_path: Path to the JSON file containing generated
+                retrieval results.
+            dataset_path: Path to the JSON dataset containing the expected
+                document sources.
+
+        Output:
+            Prints the calculated Recall@1, Recall@3, Recall@5, and Recall@10
+            metrics, showing retrieval performance for different values of k.
+        """
+
         k_list = [1, 3, 5, 10]
         results = []
 
@@ -296,6 +403,17 @@ class RAGApplication:
 
 
 def main() -> None:
-    print("\n========= Hello from rag-against-the-machine! =========\n")
+    """Starts the command-line interface for the RAG application.
+
+    The function initializes the Fire command-line interface using the
+    ``RAGApplication`` class, exposing its public methods as terminal commands.
+    This allows users to execute the indexing, searching, answering, and
+    evaluation workflows directly from the command line.
+
+    Output:
+        Launches the command-line interface and waits for user-provided
+        commands and arguments to execute the corresponding application
+        operations.
+    """
+
     fire.Fire(RAGApplication)
-    print("\n========= Program ended =========\n")

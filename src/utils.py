@@ -8,6 +8,22 @@ from transformers import PreTrainedTokenizerBase
 
 
 def get_search_results(query: str, k: int = 10) -> dict[str, Any]:
+    """Retrieves the most relevant document chunks for a given query.
+
+    The function loads the previously generated BM25 index and the chunk
+    metadata, performs a retrieval using the provided query, and validates the
+    retrieved sources before packaging them into a structured search result.
+
+    Args:
+        query: Text query used to retrieve relevant document chunks.
+        k: Maximum number of document chunks to retrieve.
+
+    Returns:
+        A dictionary containing the question identifier, the original query,
+        and a list of the retrieved sources. Each source includes its file
+        path, character offsets, and chunk text.
+    """
+
     index_path = "data/processed/bm25_index"
     chunks_path = "data/processed/chunks/all_chunks.json"
     sources = []
@@ -42,6 +58,22 @@ def get_search_results(query: str, k: int = 10) -> dict[str, Any]:
 
 
 def create_dir(path: str) -> None:
+    """Creates a directory if it does not already exist.
+
+    The function creates the specified directory, including any missing parent
+    directories. If the directory cannot be created due to insufficient
+    permissions or another operating system error, an error message is printed
+    and the program terminates.
+
+    Args:
+        path: Path of the directory to create.
+
+    Output:
+        Creates the requested directory on the filesystem if it does not
+        already exist. Prints an error message and exits if the directory
+        cannot be created.
+    """
+
     try:
         Path(path).mkdir(parents=True, exist_ok=True)
     except PermissionError:
@@ -56,6 +88,24 @@ def create_dir(path: str) -> None:
 def get_prompt(sources: list[dict[str, Any]],
                context: str,
                question: str) -> str:
+    """Builds the prompt used for answer generation.
+
+    The function appends the retrieved document sources to the provided
+    context and constructs the complete prompt that will be sent to the
+    language model. The generated prompt contains the system instructions,
+    the retrieved context, the user question, and the required output format.
+
+    Args:
+        sources: List of retrieved document sources used as context for the
+            language model.
+        context: Initial context string to which the retrieved sources are
+            appended.
+        question: User question that the model should answer.
+
+    Returns:
+        A formatted prompt string ready to be passed to the language model for
+        answer generation.
+    """
 
     for i, source in enumerate(sources, 1):
         context += (
@@ -104,6 +154,24 @@ def get_answer(model: Any,
                tokenizer: PreTrainedTokenizerBase,
                search: dict[str, Any],
                k: int = 10) -> MinimalAnswer:
+    """Generates an answer from the retrieved context using the language model.
+
+    The function constructs a prompt from the retrieved sources, performs text
+    generation with the provided language model, cleans the generated output,
+    validates that the answer follows the expected format, and packages the
+    result into a validated answer object.
+
+    Args:
+        model: Language model used to generate the answer.
+        tokenizer: Tokenizer associated with the language model.
+        search: Dictionary containing the question and its retrieved sources.
+        k: Maximum number of retrieved sources considered. This parameter is
+            included for consistency with the application interface.
+
+    Returns:
+        A ``MinimalAnswer`` object containing the original question, its
+        identifier, the retrieved sources, and the generated answer.
+    """
 
     sources = search["retrieved_sources"]
     context = f"Question: {search['question']}\n\n"
