@@ -38,8 +38,8 @@ class RAGApplication:
             data directory.
         """
 
-        if max_chunk_size < 150:
-            print("Error. Chunk size must be at least 150")
+        if max_chunk_size < 150 or max_chunk_size > 2000:
+            print("Error. Chunk size must be between 150 and 2000")
             exit(1)
         parser = Parser(max_chunk_size)
         print("Ingestion on process...")
@@ -264,7 +264,7 @@ class RAGApplication:
         print(result.model_dump_json(indent=4))
 
     def answer_dataset(self,
-                       search_results_path: str,
+                       student_search_results_path: str,
                        save_directory: str) -> None:
         """Generates answers for all retrieved questions in a dataset.
 
@@ -273,7 +273,7 @@ class RAGApplication:
         the complete question-answer results.
 
         Args:
-            search_results_path: Path to the JSON file containing retrieval
+            student_search_results_path: Path to the JSON file containing retrieval
                 results for each question.
             save_directory: Directory where the generated answers JSON file
                 will be saved.
@@ -293,7 +293,7 @@ class RAGApplication:
             config=config,
             device_map="auto",
             )
-        with open(search_results_path, 'r', encoding='utf-8') as f:
+        with open(student_search_results_path, 'r', encoding='utf-8') as f:
             search_results = json.load(f)
             for search_result in tqdm(search_results['search_results'],
                                       desc="Generating answers"):
@@ -306,7 +306,7 @@ class RAGApplication:
             )
         create_dir(save_directory)
         output_file_path = (Path(save_directory) /
-                            Path(search_results_path).name
+                            Path(student_search_results_path).name
                             )
         with open(output_file_path, 'w', encoding='utf-8') as f:
             json.dump(final_output.model_dump(), f,
@@ -347,7 +347,7 @@ class RAGApplication:
             json.dump(answers, f, indent=4, ensure_ascii=False)
 
     def evaluate(self,
-                 search_results_path: str,
+                 student_search_results_path: str,
                  dataset_path: str) -> None:
         """Evaluates the retrieval quality of the generated search results.
 
@@ -357,7 +357,7 @@ class RAGApplication:
         sufficiently overlap with the expected source locations.
 
         Args:
-            search_results_path: Path to the JSON file containing generated
+            student_search_results_path: Path to the JSON file containing generated
                 retrieval results.
             dataset_path: Path to the JSON dataset containing the expected
                 document sources.
@@ -370,7 +370,7 @@ class RAGApplication:
         k_list = [1, 3, 5, 10]
         results = []
 
-        with open(search_results_path, 'r', encoding='utf-8') as f:
+        with open(student_search_results_path, 'r', encoding='utf-8') as f:
             search_results = json.load(f)
         with open(dataset_path, 'r', encoding='utf-8') as d:
             dataset = json.load(d)
