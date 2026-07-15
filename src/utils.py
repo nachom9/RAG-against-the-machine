@@ -27,8 +27,11 @@ def get_search_results(query: str, k: int = 10) -> dict[str, Any]:
     index_path = "data/processed/bm25_index"
     chunks_path = "data/processed/chunks/all_chunks.json"
     sources = []
-
-    retriever = bm25s.BM25.load(index_path, load_corpus=True)
+    try:
+        retriever = bm25s.BM25.load(index_path, load_corpus=True)
+    except Exception:
+        print("Error. There is no index.")
+        exit(1)
 
     with open(chunks_path, 'r', encoding="utf-8") as f:
         chunks = json.load(f)

@@ -68,8 +68,11 @@ class RAGApplication:
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
         sources = []
-
-        retriever = bm25s.BM25.load(index_path, load_corpus=True)
+        try:
+            retriever = bm25s.BM25.load(index_path, load_corpus=True)
+        except Exception:
+            print("Error. There is no index.")
+            exit(1)
 
         try:
             with open(chunks_path, 'r', encoding="utf-8") as f:
@@ -129,7 +132,11 @@ class RAGApplication:
         index_path = "data/processed/bm25_index"
         chunks_path = "data/processed/chunks/all_chunks.json"
         search_results_list = []
-        retriever = bm25s.BM25.load(index_path, load_corpus=True)
+        try:
+            retriever = bm25s.BM25.load(index_path, load_corpus=True)
+        except Exception:
+            print("Error. There is no index.")
+            exit(1)
 
         try:
             with open(chunks_path, 'r', encoding="utf-8") as f:
@@ -293,12 +300,17 @@ class RAGApplication:
             config=config,
             device_map="auto",
             )
-        with open(student_search_results_path, 'r', encoding='utf-8') as f:
-            search_results = json.load(f)
-            for search_result in tqdm(search_results['search_results'],
-                                      desc="Generating answers"):
-                answer = get_answer(model, tokenizer, search_result)
-                answers.append(answer)
+        try:
+            with open(student_search_results_path, 'r', encoding='utf-8') as f:
+                search_results = json.load(f)
+        except Exception as e:
+            print(f"Error. Couldn't open file "
+                  f"'{student_search_results_path}': {e}")
+            exit(1)
+        for search_result in tqdm(search_results['search_results'],
+                                  desc="Generating answers"):
+            answer = get_answer(model, tokenizer, search_result)
+            answers.append(answer)
 
         final_output = StudentSearchResultsAndAnswer(
             search_results=answers,
@@ -308,9 +320,13 @@ class RAGApplication:
         output_file_path = (Path(save_directory) /
                             Path(student_search_results_path).name
                             )
-        with open(output_file_path, 'w', encoding='utf-8') as f:
-            json.dump(final_output.model_dump(), f,
-                      indent=4, ensure_ascii=False)
+        try:
+            with open(output_file_path, 'w', encoding='utf-8') as f:
+                json.dump(final_output.model_dump(), f,
+                          indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(f"Error. Couldn't open file '{output_file_path}': {e}")
+            exit(1)
         print(f"Saved student_search_results_and_answer "
               f"to {output_file_path}")
 
@@ -374,10 +390,19 @@ class RAGApplication:
         k_list = [1, 3, 5, 10]
         results = []
 
-        with open(student_search_results_path, 'r', encoding='utf-8') as f:
-            search_results = json.load(f)
-        with open(dataset_path, 'r', encoding='utf-8') as d:
-            dataset = json.load(d)
+        try:
+            with open(student_search_results_path, 'r', encoding='utf-8') as f:
+                search_results = json.load(f)
+        except Exception as e:
+            print(f"Error. Couldn't open file "
+                  f"'{student_search_results_path}': {e}")
+            exit(1)
+        try:
+            with open(dataset_path, 'r', encoding='utf-8') as d:
+                dataset = json.load(d)
+        except Exception as e:
+            print(f"Error. Couldn't open file '{dataset_path}': {e}")
+            exit(1)
 
         for k in k_list:
             correct_sources = 0
