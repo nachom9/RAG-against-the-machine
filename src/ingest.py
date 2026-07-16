@@ -60,8 +60,7 @@ class Parser:
             try:
                 with open(file, 'r', encoding='utf-8') as f:
                     content = f.read()
-            except Exception as e:
-                print(f"Error. Couldn't open file '{file}': {e}")
+            except Exception:
                 continue
 
             if file.endswith(".py"):

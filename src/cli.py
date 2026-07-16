@@ -330,42 +330,6 @@ class RAGApplication:
         print(f"Saved student_search_results_and_answer "
               f"to {output_file_path}")
 
-    def answer_dataset_test(self,
-                            search_results_path: str,
-                            save_directory: str) -> None:
-        answers = []
-
-        model_name = "Qwen/Qwen3-0.6B"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        config = AutoConfig.from_pretrained(model_name)
-
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            config=config,
-            device_map="auto",
-        )
-
-        with open(search_results_path, "r", encoding="utf-8") as f:
-            search_results = json.load(f)
-
-        for search_result in tqdm(search_results["search_results"],
-                                  desc="Generating answers"):
-            answer = get_answer(model, tokenizer, search_result)
-
-            answers.append({
-                "question": answer.question,
-                "answer": answer.answer
-            })
-
-        create_dir(save_directory)
-        output_file_path = (Path(save_directory) /
-                            Path(search_results_path).name)
-
-        with open(output_file_path, "w", encoding="utf-8") as f:
-            json.dump(answers, f, indent=4, ensure_ascii=False)
-        print(f"Saved student_search_results_and_answer"
-              f" to {output_file_path}")
-
     def evaluate(self,
                  student_search_results_path: str,
                  dataset_path: str) -> None:
