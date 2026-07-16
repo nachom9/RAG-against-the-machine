@@ -4,8 +4,8 @@ import fire
 import bm25s
 import json
 from src.models import (MinimalSearchResults, MinimalSource,
-                     StudentSearchResults, MinimalAnswer,
-                     StudentSearchResultsAndAnswer)
+                        StudentSearchResults, MinimalAnswer,
+                        StudentSearchResultsAndAnswer)
 from src.utils import get_search_results, get_prompt, create_dir, get_answer
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 from tqdm import tqdm
