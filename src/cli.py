@@ -3,7 +3,7 @@ from pathlib import Path
 import fire
 import bm25s
 import json
-from .models import (MinimalSearchResults, MinimalSource,
+from src.models import (MinimalSearchResults, MinimalSource,
                      StudentSearchResults, MinimalAnswer,
                      StudentSearchResultsAndAnswer)
 from src.utils import get_search_results, get_prompt, create_dir, get_answer

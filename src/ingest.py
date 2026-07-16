@@ -1,6 +1,6 @@
 from pathlib import Path
 import bm25s
-from .models import MinimalSource
+from src.models import MinimalSource
 import json
 from src.utils import create_dir
 
